@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import time
 import socket
+from datetime import datetime, timedelta
 
 class IPChange:
     """   
@@ -40,6 +41,15 @@ class IPChange:
             else:
                 print('An error occurred:', e)
             exit()
+        #except socket.timeout as e:
+        except TimeoutError as e:
+            print("The connection timed out.", e)
+            exit()
+        except Exception as e:
+            # Handle the exception
+            print("An error occurred:", e)
+            exit()
+
         print(f'Response took {time.time() - request_time:.2f} seconds')
         current_ip = response.read().decode()
 
@@ -54,7 +64,7 @@ class IPChange:
                     no_data = True
         else:
             no_data = True
-        print(f'Content of file {data=}')
+        #print(f'Content of file {data=}')
 
         if no_data:
             data['status'] = 'first_run'
@@ -63,7 +73,7 @@ class IPChange:
             data['li_last_check'] = request_time
         else:
             if current_ip != data['last_ip']:
-                print("novi IP")
+                #print("novi IP")
                 data['status'] = 'alert'
                 data['previous_ip'] = data['last_ip']
                 data['last_ip'] = current_ip
@@ -84,14 +94,46 @@ class IPChange:
 
 
 def main():
-    print('INIT') 
+    print('\nINIT') 
     ip = IPChange()
     data = ip.check_external_ip()
-    print(data)
+    #print(data)
+
+    def hrd(utt: float) -> str:
+        """To human readable date (%d/%m/%Y %H:%M:%S)
+        utt is abbreviation for unix time stamp"""
+        return datetime.fromtimestamp(utt).strftime('%d/%m/%Y %H:%M:%S')
+    
+    def diff(timestamp1, timestamp2):
+        """Return difference between two unix time stamps in human readable form."""
+        if timestamp1 > timestamp2:
+            raise ValueError('timestamp1 cannot be larger than timestamp2.')
+
+        # Calculate the time difference
+        time_difference = abs(timestamp1 - timestamp2)
+        time_delta = timedelta(seconds=time_difference)
+        #print(f'{time_delta=}')
+
+        # Format the time difference in a human-readable form
+        days = time_delta.days
+        hours, remainder = divmod(time_delta.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # Generate the human-readable time difference string
+        return f"{days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
 
     if data['status'] == 'alert':
-        msg = f"New IP {data['last_ip']} old IP was {data['previous_ip']}"
-        print(msg)
+        msg = \
+        f"New IP  is: {data['last_ip']}\n" +\
+        f"old IP was: {data['previous_ip']}\n" +\
+        f"New IP first seen on {hrd(data['li_last_check'])}\n\n" +\
+        f"old IP from {hrd(data['pi_first_seen'])} to {hrd(data['pi_last_check'])}\n" +\
+        f"old IP was in use {diff(data['pi_first_seen'], data['pi_last_check'])}.\n" +\
+        "\n" +\
+        "Time duration is calculated from last checked time,\n" +\
+        "last checked time is not exact time when IP was changed,\n" +\
+        "it happened sometime between last checked time an New IP first seen on."
+        #print(msg)
         
         # For notification
         import tkinter as tk
@@ -101,9 +143,9 @@ def main():
 
         root = tk.Tk()
         root.title('External IP changed !!!')
-        root.geometry('300x100')
+        root.geometry('700x300')
 
-        label = tk.Label(root, text=msg, font=('Arial', 18))
+        label = tk.Label(root, text=msg, font=('Arial', 18), justify='left')
         label.pack(pady=20)
 
         close_button = tk.Button(root, text="Close", command=close_window)
