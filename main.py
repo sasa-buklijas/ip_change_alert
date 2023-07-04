@@ -123,12 +123,16 @@ def main():
         return f"{days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
 
     if data['status'] == 'alert':
+        old_ip_first_seen = hrd(data['pi_first_seen'])
+        old_ip_last_check = hrd(data['pi_last_check'])
+        old_ip_duration = diff(data['pi_first_seen'], data['pi_last_check'])
+
         msg = \
         f"New IP  is: {data['last_ip']}\n" +\
         f"old IP was: {data['previous_ip']}\n" +\
         f"New IP first seen on {hrd(data['li_last_check'])}\n\n" +\
-        f"old IP from {hrd(data['pi_first_seen'])} to {hrd(data['pi_last_check'])}\n" +\
-        f"old IP was in use {diff(data['pi_first_seen'], data['pi_last_check'])}.\n" +\
+        f"old IP from {old_ip_first_seen} to {old_ip_last_check}\n" +\
+        f"old IP was in use {old_ip_duration}.\n" +\
         "\n" +\
         "Time duration is calculated from last checked time,\n" +\
         "last checked time is not exact time when IP was changed,\n" +\
@@ -153,6 +157,12 @@ def main():
 
         root.mainloop()
 
+        # add to log file
+        with open('log_ip.txt', 'a+') as file:
+            file.write(
+        f"{data['previous_ip']} - from {old_ip_first_seen} to {old_ip_last_check}"+\
+        f" - {old_ip_duration} - IP change first seen on {hrd(data['li_last_check'])}\n"
+        )
 
 if __name__ == '__main__':
     main()

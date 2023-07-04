@@ -3,6 +3,8 @@ LOGS/
 
 # local DB
 data.json
+# local log
+log_ip.txt
 
 # Local test sh script
 t.sh
