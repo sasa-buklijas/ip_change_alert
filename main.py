@@ -148,6 +148,7 @@ def main():
         root = tk.Tk()
         root.title('External IP changed !!!')
         root.geometry('700x300')
+        root.resizable(False, False)
 
         label = tk.Label(root, text=msg, font=('Arial', 18), justify='left')
         label.pack(pady=20)
